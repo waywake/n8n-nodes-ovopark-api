@@ -1,0 +1,65 @@
+{
+  "name": "@waywake/n8n-nodes-ovopark-api",
+  "version": "0.1.0",
+  "description": "Ovopark API for n8n",
+  "keywords": [
+    "n8n-community-node-package"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "author": {
+    "name": "xAmast",
+    "email": "x@amast.fun"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/waywake/n8n-nodes-ovopark-api"
+  },
+  "packageManager": "bun@1.3.14",
+  "engines": {
+    "node": ">=20.15"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "bun run clean && bun run build:js && bun run build:types && bun run build:assets",
+    "build:assets": "mkdir -p dist/nodes/OvoparkApi && cp nodes/OvoparkApi/ovopark.svg dist/nodes/OvoparkApi/ovopark.svg",
+    "build:credentials": "bun build ./credentials/OvoparkApi.credentials.ts --target node --format cjs --packages bundle --external n8n-workflow --outfile ./dist/credentials/OvoparkApi.credentials.js",
+    "build:js": "bun run build:credentials && bun run build:node",
+    "build:node": "bun build ./nodes/OvoparkApi/OvoparkApi.node.ts --target node --format cjs --packages bundle --external n8n-workflow --outfile ./dist/nodes/OvoparkApi/OvoparkApi.node.js",
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+    "check": "bun run typecheck && bun run lint && bun run build",
+    "clean": "rm -rf dist",
+    "dev": "bun run build:credentials && bun run build:assets && bun build ./nodes/OvoparkApi/OvoparkApi.node.ts --target node --format cjs --packages bundle --external n8n-workflow --outfile ./dist/nodes/OvoparkApi/OvoparkApi.node.js --watch",
+    "format": "prettier nodes credentials --write",
+    "lint": "eslint nodes credentials package.json",
+    "lintfix": "eslint nodes credentials package.json --fix",
+    "prepublishOnly": "bun run build && bun run lint -c .eslintrc.prepublish.js nodes credentials package.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/OvoparkApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/OvoparkApi/OvoparkApi.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "~8.32.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-n8n-nodes-base": "^1.16.3",
+    "n8n-workflow": "*",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
+  "dependencies": {
+    "@waywake/ovopark-sdk": "^0.1.0"
+  }
+}
