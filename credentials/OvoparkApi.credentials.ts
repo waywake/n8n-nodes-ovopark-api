@@ -58,15 +58,5 @@ export class OvoparkApi implements ICredentialType {
 			required: true,
 			description: 'The request mode sent as _requestMode.',
 		},
-		{
-			displayName: 'Ovo Authorization',
-			name: 'authorization',
-			type: 'string',
-			default: '',
-			typeOptions: {
-				password: true,
-			},
-			description: 'Optional Ovo-Authorization header value for APIs that require a login token.',
-		},
 	];
 }

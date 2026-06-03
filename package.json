@@ -1,6 +1,6 @@
 {
   "name": "@waywake/n8n-nodes-ovopark-api",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Ovopark API for n8n",
   "keywords": [
     "n8n-community-node-package"
@@ -23,10 +23,12 @@
   "scripts": {
     "build": "bun run clean && bun run build:js && bun run build:types && bun run build:assets",
     "build:assets": "mkdir -p dist/nodes/OvoparkApi && cp nodes/OvoparkApi/ovopark.svg dist/nodes/OvoparkApi/ovopark.svg",
-    "build:credentials": "bun build ./credentials/OvoparkApi.credentials.ts --target node --format cjs --packages bundle --external n8n-workflow --outfile ./dist/credentials/OvoparkApi.credentials.js",
+    "build:credentials": "bun run build:platform-credentials && bun run build:user-credentials",
     "build:js": "bun run build:credentials && bun run build:node",
     "build:node": "bun build ./nodes/OvoparkApi/OvoparkApi.node.ts --target node --format cjs --packages bundle --external n8n-workflow --outfile ./dist/nodes/OvoparkApi/OvoparkApi.node.js",
+    "build:platform-credentials": "bun build ./credentials/OvoparkApi.credentials.ts --target node --format cjs --packages bundle --external n8n-workflow --outfile ./dist/credentials/OvoparkApi.credentials.js",
     "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build:user-credentials": "bun build ./credentials/OvoparkUserApi.credentials.ts --target node --format cjs --packages bundle --external n8n-workflow --outfile ./dist/credentials/OvoparkUserApi.credentials.js",
     "check": "bun run typecheck && bun run lint && bun run build",
     "clean": "rm -rf dist",
     "dev": "bun run build:credentials && bun run build:assets && bun build ./nodes/OvoparkApi/OvoparkApi.node.ts --target node --format cjs --packages bundle --external n8n-workflow --outfile ./dist/nodes/OvoparkApi/OvoparkApi.node.js --watch",
@@ -42,13 +44,15 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/OvoparkApi.credentials.js"
+      "dist/credentials/OvoparkApi.credentials.js",
+      "dist/credentials/OvoparkUserApi.credentials.js"
     ],
     "nodes": [
       "dist/nodes/OvoparkApi/OvoparkApi.node.js"
     ]
   },
   "devDependencies": {
+    "@types/node": "^22.15.30",
     "@typescript-eslint/parser": "~8.32.0",
     "eslint": "^8.57.0",
     "eslint-plugin-n8n-nodes-base": "^1.16.3",

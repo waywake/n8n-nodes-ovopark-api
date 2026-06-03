@@ -9,7 +9,10 @@ import type {
 } from 'n8n-workflow';
 import type { SignableParams, SignableValue } from '@waywake/ovopark-sdk';
 import { OpenPlatform } from '@waywake/ovopark-sdk';
+import { createHash } from 'node:crypto';
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+
+const SSO_LOGIN_METHOD = 'open.shopweb.security.ssoLogin';
 
 export class OvoparkApi implements INodeType {
 	description: INodeTypeDescription = {
@@ -18,7 +21,7 @@ export class OvoparkApi implements INodeType {
 		icon: 'file:ovopark.svg',
 		group: ['transform'],
 		version: 1,
-		subtitle: '={{ $parameter["method"] }}',
+		subtitle: '={{ $parameter["operation"] }}',
 		description: '万店掌开放平台 API',
 		defaults: {
 			name: '万店掌 API',
@@ -30,8 +33,38 @@ export class OvoparkApi implements INodeType {
 				name: 'ovoparkApi',
 				required: true,
 			},
+			{
+				name: 'ovoparkUserApi',
+				required: true,
+				displayOptions: {
+					show: {
+						operation: ['getUserToken'],
+					},
+				},
+			},
 		],
 		properties: [
+			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'Call API',
+						value: 'callApi',
+						description: 'Call an Ovopark API method',
+						action: 'Call API',
+					},
+					{
+						name: 'Get User Token',
+						value: 'getUserToken',
+						description: 'Get an Ovo-Authorization user token',
+						action: 'Get user token',
+					},
+				],
+				default: 'callApi',
+			},
 			{
 				displayName: 'Method',
 				name: 'method',
@@ -40,6 +73,11 @@ export class OvoparkApi implements INodeType {
 				required: true,
 				description: 'The Ovopark API method name sent as _mt',
 				placeholder: 'open.organize.departments.getDepartments',
+				displayOptions: {
+					show: {
+						operation: ['callApi'],
+					},
+				},
 			},
 			{
 				displayName: 'Request Parameters',
@@ -50,6 +88,11 @@ export class OvoparkApi implements INodeType {
 				},
 				default: '{}',
 				description: 'Business parameters to sign and send with the gateway request',
+				displayOptions: {
+					show: {
+						operation: ['callApi'],
+					},
+				},
 			},
 			{
 				displayName: 'Timeout',
@@ -70,6 +113,27 @@ export class OvoparkApi implements INodeType {
 				},
 				default: '{}',
 				description: 'Additional HTTP headers to send with the request',
+				displayOptions: {
+					show: {
+						operation: ['callApi'],
+					},
+				},
+			},
+			{
+				displayName: 'Ovo Authorization',
+				name: 'authorization',
+				type: 'string',
+				default: '',
+				typeOptions: {
+					password: true,
+				},
+				description:
+					'Short-lived Ovo-Authorization header value for APIs that require a login token',
+				displayOptions: {
+					show: {
+						operation: ['callApi'],
+					},
+				},
 			},
 		],
 	};
@@ -81,59 +145,13 @@ export class OvoparkApi implements INodeType {
 
 		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
 			try {
-				const method = this.getNodeParameter('method', itemIndex) as string;
-
-				if (!method.trim()) {
-					throw new NodeOperationError(this.getNode(), 'Method cannot be empty.', {
-						itemIndex,
-					});
-				}
-
-				const client = new OpenPlatform({
-					url: getRequiredCredential(credentials.url, 'Gateway URL', this.getNode(), itemIndex),
-					aid: getOptionalCredential(credentials.appId),
-					akey: getRequiredCredential(
-						credentials.accessKeyId,
-						'Access Key ID',
-						this.getNode(),
-						itemIndex,
-					),
-					asecret: getRequiredCredential(
-						credentials.accessKeySecret,
-						'Access Key Secret',
-						this.getNode(),
-						itemIndex,
-					),
-					mt: method,
-					version: getRequiredCredential(credentials.version, 'Version', this.getNode(), itemIndex),
-					requestMode: getRequiredCredential(
-						credentials.requestMode,
-						'Request Mode',
-						this.getNode(),
-						itemIndex,
-					),
-				});
-
-				const params = toSignableParams(
-					parseJsonObject(
-						this.getNodeParameter('params', itemIndex),
-						'Request Parameters',
-						this.getNode(),
-						itemIndex,
-					),
-				);
-				const headers = parseHeaders(
-					this.getNodeParameter('headers', itemIndex),
-					getOptionalCredential(credentials.authorization),
-					this.getNode(),
-					itemIndex,
-				);
+				const operation = this.getNodeParameter('operation', itemIndex) as string;
 				const timeoutMs = this.getNodeParameter('timeoutMs', itemIndex) as number;
 
-				const result = await client.request(params, {
-					headers,
-					timeoutMs,
-				});
+				const result =
+					operation === 'getUserToken'
+						? await getUserToken.call(this, credentials, timeoutMs, itemIndex)
+						: await callApi.call(this, credentials, timeoutMs, itemIndex);
 
 				returnData.push({
 					json: toJsonObject(result),
@@ -166,6 +184,115 @@ export class OvoparkApi implements INodeType {
 
 		return [returnData];
 	}
+}
+
+async function callApi(
+	this: IExecuteFunctions,
+	credentials: Record<string, unknown>,
+	timeoutMs: number,
+	itemIndex: number,
+): Promise<unknown> {
+	const method = this.getNodeParameter('method', itemIndex) as string;
+
+	if (!method.trim()) {
+		throw new NodeOperationError(this.getNode(), 'Method cannot be empty.', {
+			itemIndex,
+		});
+	}
+
+	const client = createClient(credentials, method, this.getNode(), itemIndex);
+	const params = toSignableParams(
+		parseJsonObject(
+			this.getNodeParameter('params', itemIndex),
+			'Request Parameters',
+			this.getNode(),
+			itemIndex,
+		),
+	);
+	const headers = parseHeaders(
+		this.getNodeParameter('headers', itemIndex),
+		getOptionalCredential(this.getNodeParameter('authorization', itemIndex)),
+		this.getNode(),
+		itemIndex,
+	);
+
+	return await client.request(params, {
+		headers,
+		timeoutMs,
+	});
+}
+
+async function getUserToken(
+	this: IExecuteFunctions,
+	credentials: Record<string, unknown>,
+	timeoutMs: number,
+	itemIndex: number,
+): Promise<IDataObject> {
+	const userCredentials = await this.getCredentials('ovoparkUserApi');
+	const username = getRequiredCredential(
+		userCredentials.username,
+		'Username',
+		this.getNode(),
+		itemIndex,
+	);
+	const password = getRequiredCredential(
+		userCredentials.password,
+		'Password',
+		this.getNode(),
+		itemIndex,
+	);
+	const client = createClient(credentials, SSO_LOGIN_METHOD, this.getNode(), itemIndex);
+	const response = await client.request<IDataObject>(
+		{
+			userName: username,
+			password: md5Hex(password),
+		},
+		{
+			timeoutMs,
+		},
+	);
+	const data = response.data as IDataObject | undefined;
+	const token = getOptionalCredential(data?.token);
+
+	if (!token) {
+		throw new NodeOperationError(
+			this.getNode(),
+			`ssoLogin did not return data.token: ${JSON.stringify(response)}`,
+			{
+				itemIndex,
+			},
+		);
+	}
+
+	return {
+		...response,
+		ovoAuthorization: token,
+		token,
+		tokenExpirationTimestamp: data?.tokenExpirationTimestamp as GenericValue,
+		tokenExpirationSurplusTimestamp: data?.tokenExpirationSurplusTimestamp as GenericValue,
+	};
+}
+
+function createClient(
+	credentials: Record<string, unknown>,
+	method: string,
+	node: INode,
+	itemIndex: number,
+): OpenPlatform {
+	return new OpenPlatform({
+		url: getRequiredCredential(credentials.url, 'Gateway URL', node, itemIndex),
+		aid: getOptionalCredential(credentials.appId),
+		akey: getRequiredCredential(credentials.accessKeyId, 'Access Key ID', node, itemIndex),
+		asecret: getRequiredCredential(
+			credentials.accessKeySecret,
+			'Access Key Secret',
+			node,
+			itemIndex,
+		),
+		mt: method,
+		version: getRequiredCredential(credentials.version, 'Version', node, itemIndex),
+		requestMode: getRequiredCredential(credentials.requestMode, 'Request Mode', node, itemIndex),
+	});
 }
 
 function parseJsonObject(
@@ -299,6 +426,10 @@ function getOptionalCredential(value: unknown): string | undefined {
 	const credential = String(value).trim();
 
 	return credential || undefined;
+}
+
+function md5Hex(value: string): string {
+	return createHash('md5').update(value, 'utf8').digest('hex');
 }
 
 function getErrorMessage(error: unknown): string {
