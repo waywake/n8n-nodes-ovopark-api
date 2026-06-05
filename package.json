@@ -1,6 +1,6 @@
 {
   "name": "@waywake/n8n-nodes-ovopark-api",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Ovopark API for n8n",
   "keywords": [
     "n8n-community-node-package"
@@ -64,6 +64,6 @@
     "n8n-workflow": "*"
   },
   "dependencies": {
-    "@waywake/ovopark-sdk": "^0.1.0"
+    "@waywake/ovopark-sdk": "^0.1.1"
   }
 }

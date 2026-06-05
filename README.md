@@ -5,6 +5,7 @@
 ## 功能
 
 - 使用 `OpenPlatform` SDK 自动生成 `_sig` 并提交表单请求
+- SDK 签名参数使用确定的字典序排序，兼容包含大小写混合字段名的接口
 - 支持自定义网关 URL、App ID、AccessKey ID、AccessKey Secret、版本和请求模式
 - 支持独立的 `Get User Token` 操作，通过用户名密码获取短期 `Ovo-Authorization`
 - 支持在节点参数中传入短期有效的 `Ovo-Authorization` 请求头
@@ -31,11 +32,11 @@ bun run build
 Ovopark API Credentials:
 
 - `Gateway URL`: 默认 `https://cloudapi.ovopark.com/cloud.api`
-- `App ID`: 对应 `_aid`，留空时使用 SDK 默认值
+- `App ID`: 对应 `_aid`，留空时使用 SDK 默认值 `S107`
 - `Access Key ID`: 对应 `_akey`
 - `Access Key Secret`: 用于生成 `_sig`
 - `Version`: 对应 `_version`，默认 `v1`
-- `Request Mode`: 对应 `_requestMode`，默认 `post`
+- `Request Mode`: 对应 `_requestMode`，默认 `POST`
 
 Ovopark User API Credentials:
 

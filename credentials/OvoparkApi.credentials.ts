@@ -54,7 +54,7 @@ export class OvoparkApi implements ICredentialType {
 			displayName: 'Request Mode',
 			name: 'requestMode',
 			type: 'string',
-			default: 'post',
+			default: 'POST',
 			required: true,
 			description: 'The request mode sent as _requestMode.',
 		},

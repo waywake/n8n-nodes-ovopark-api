@@ -192,9 +192,9 @@ async function callApi(
 	timeoutMs: number,
 	itemIndex: number,
 ): Promise<unknown> {
-	const method = this.getNodeParameter('method', itemIndex) as string;
+	const method = (this.getNodeParameter('method', itemIndex) as string).trim();
 
-	if (!method.trim()) {
+	if (!method) {
 		throw new NodeOperationError(this.getNode(), 'Method cannot be empty.', {
 			itemIndex,
 		});

@@ -5,7 +5,7 @@
     "": {
       "name": "@waywake/n8n-nodes-ovopark-api",
       "dependencies": {
-        "@waywake/ovopark-sdk": "^0.1.0",
+        "@waywake/ovopark-sdk": "^0.1.1",
       },
       "devDependencies": {
         "@types/node": "^22.15.30",
@@ -70,7 +70,7 @@
 
     "@ungap/structured-clone": ["@ungap/structured-clone@1.3.1", "", {}, "sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ=="],
 
-    "@waywake/ovopark-sdk": ["@waywake/ovopark-sdk@0.1.0", "", {}, "sha512-1bejdysEWFKg43HUP3qq4ia49rc3DZuGQRaPaJhHrPnenBc70JyjiMUAHAik8nlJyjha3EGigLIZQNgsoqTl0w=="],
+    "@waywake/ovopark-sdk": ["@waywake/ovopark-sdk@0.1.1", "", {}, "sha512-MCBJ6eu2TSumNjwF5B9LtC7fBqUpx2kpBgjv5fVn7caRH1Ig+Z/idQnPtfh7swCqPILQDgeJPdXQXgeG4TiiSg=="],
 
     "acorn": ["acorn@8.16.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw=="],
 
